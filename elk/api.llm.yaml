@@ -9,8 +9,15 @@ api:
     django:
       virutal_env: .venv
       database: postgres
+  env variables:
+    - DATABASE_URL:
+        type: postgres url
+        kind: string
+        load with: dj_database_url
+
   build:
-    - docker image
+    - docker image:
+        tag: elk-api:v{number}
   environments:
     - local:
         provider: docker compose

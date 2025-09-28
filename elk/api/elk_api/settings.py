@@ -7,6 +7,7 @@ from typing import List
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 from django.core.exceptions import ImproperlyConfigured
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -62,46 +63,11 @@ TEMPLATES = [
 WSGI_APPLICATION = "elk_api.wsgi.application"
 
 database_url = os.getenv("DATABASE_URL")
-if database_url:
-    parsed = urlparse(database_url)
-    if not parsed.scheme.startswith("postgres"):
-        raise ImproperlyConfigured("DATABASE_URL must be a Postgres connection string")
-
-    query = dict(parse_qsl(parsed.query))
-    default_ssl = "disable" if parsed.hostname in {"localhost", "127.0.0.1"} else "require"
-    query.setdefault("sslmode", os.getenv("DATABASE_SSLMODE", default_ssl))
-    conninfo = urlunparse(parsed._replace(query=urlencode(query)))
-
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": parsed.path.lstrip("/") or os.getenv("POSTGRES_DB", "postgres"),
-            "USER": parsed.username,
-            "PASSWORD": parsed.password,
-            "HOST": parsed.hostname,
-            "PORT": parsed.port or "5432",
-            "OPTIONS": {"conninfo": conninfo},
-        }
-    }
-elif os.getenv("POSTGRES_DB"):
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("POSTGRES_DB", "elk"),
-            "USER": os.getenv("POSTGRES_USER", "elk"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "elk"),
-            "HOST": os.getenv("POSTGRES_HOST", "localhost"),
-            "PORT": os.getenv("POSTGRES_PORT", "5432"),
-            "OPTIONS": {"sslmode": "require"},
-        }
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        default=f'postgres://{os.environ.get("DB_USER", "user")}:{os.environ.get("DB_PASSWORD", "password")}@{os.environ.get("DB_HOST", "localhost")}:{os.environ.get("DB_PORT", "5432")}/{os.environ.get("DB_NAME", "mydatabase")}'
+    )
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
