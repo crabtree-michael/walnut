@@ -32,8 +32,12 @@ docker compose up --build
 For ECS/Fargate deployments build the image for linux/amd64:
 
 ```bash
-docker build --platform linux/amd64 -t <account-id>.dkr.ecr.<region>.amazonaws.com/elk-api:<tag> .
+docker build --platform linux/amd64 \
+  -t <account-id>.dkr.ecr.<region>.amazonaws.com/elk-api:<number> .
+# example: elk-api:2 (increment from the last published number)
 ```
+
+The resulting image already contains the Django admin static assets collected via `python manage.py collectstatic`, and the container entrypoint runs database migrations before starting `gunicorn`.
 
 ### Running management commands against the deployed database
 

@@ -17,7 +17,13 @@ api:
 
   build:
     - docker image:
-        tag: elk-api:v{number}
+        tag: elk-api:{number}
+        last number: 1
+        runs: 
+          - migrations
+          - gunicorn
+        include:
+          - static content for admin page
   environments:
     - local:
         provider: docker compose
