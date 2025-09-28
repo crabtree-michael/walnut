@@ -1,0 +1,96 @@
+.search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  text-align: center;
+  color: #1b263b;
+}
+
+.search-panel__headline {
+  font-size: clamp(2.5rem, 7vw, 3.75rem);
+  margin: 0;
+}
+
+.search-panel__subtitle {
+  margin: 0 auto;
+  max-width: 520px;
+  color: #415a77;
+}
+
+.search-panel__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.search-panel__input {
+  flex: 1 0 320px;
+  max-width: 480px;
+  padding: 0.85rem 1.25rem;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-color: rgba(224, 225, 221, 0.7);
+  font-size: 1rem;
+  transition: border 160ms ease, box-shadow 160ms ease;
+}
+
+.search-panel__input:focus {
+  outline: none;
+  border-color: #778da9;
+  box-shadow: 0 0 0 4px rgba(119, 141, 169, 0.25);
+}
+
+.search-panel__submit {
+  padding: 0.85rem 1.75rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #1b263b, #415a77);
+  color: #e0e1dd;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.search-panel__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-panel__submit:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(27, 38, 59, 0.2);
+}
+
+.search-panel__suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+  background: rgba(224, 225, 221, 0.7);
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgba(119, 141, 169, 0.15);
+}
+
+.search-panel__suggestion {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 14px;
+  transition: background 140ms ease;
+}
+
+.search-panel__suggestion:hover,
+.search-panel__suggestion:focus-visible {
+  background: rgba(119, 141, 169, 0.2);
+}
+
+.search-panel__error {
+  color: #e63946;
+}

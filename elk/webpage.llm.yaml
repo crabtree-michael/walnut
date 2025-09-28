@@ -1,0 +1,76 @@
+webpage:
+  kind: app
+  folder: ./webpage
+  description:
+    The elk webpage allows users to search for locations to
+    learn about safety information at that location
+  framework: react
+  output:
+    - compiled javascript of web application
+  pages:
+    homepage:
+      specification: webpage.llm.yaml
+    location:
+      specification: webpage.llm.yaml
+  uses:
+    api:
+      for: looking up hazards and tips
+      specification: api.llm.yaml
+    google maps api:
+      for: looking up points of interest
+      specification: external
+      key: AIzaSyBj_RQC6lyEmbeiE13YjtFGTv7H8mRiQ64
+  style:
+    colors:
+      - white
+      - blue
+    modern:
+      Smooth animations
+    minimilistic:
+      Essential information is presented first
+  
+homepage:
+  kind: interface
+  elements:
+    branding:
+      description: 
+        Elk text is presented largely in the center of the page
+    search:
+      description:
+        A large search bar is present that allows user to search
+        points of interest
+      on selection: open location page
+      data:
+        mock:
+          location: services/maps.js
+        places api:
+          description: 
+            On clicking submit, the list of locations should populate using
+            google maps api as the primary search. Search results should be
+            restricted to Colorado.
+          documentation: https://developers.google.com/maps/documentation/places/web-service/text-search
+          available: GOOGLE_MAP_API_KEY is present in environment
+        
+
+location:
+  kind: interface
+  elements:
+    summary:
+      description:
+        A brief amount of information is presented about the location
+    hazards:
+      kind: list
+    requirements:
+      - query api for hazards and tips:
+        description:
+          On opening the page, a request to the api should be made to load the hazards and tips
+        endpoint: 
+          hazards:
+            method: GET
+            path: "/hazards"
+            parameters:
+              latitude:
+                required: true
+              longitude:
+                required: true
+      

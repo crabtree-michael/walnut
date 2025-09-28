@@ -1,0 +1,1 @@
+"""Hazards app migrations."""

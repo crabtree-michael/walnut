@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_DEBUG: "true"
+      POSTGRES_DB: elk
+      POSTGRES_USER: elk
+      POSTGRES_PASSWORD: elk
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      INFRA_API_DOMAIN: elk-api.macmail.app
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: elk
+      POSTGRES_USER: elk
+      POSTGRES_PASSWORD: elk
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:

@@ -1,0 +1,62 @@
+Hazard:
+  kind: model
+  description:
+    Hazards are any abstract risk that could occur.
+  fields:
+    - name:
+        kind: string
+    - severity: 
+        options:
+          - low
+          - medium
+          - high
+    - type:
+        options:
+          - animal
+          - event
+          - weather
+          - disease
+  relationships:
+    - HazardPresentation:
+        description: The presentation of a hazard in a location
+        relation: Hazards have many presentations
+        fields:
+          - boundary:
+              kind: Collection of GPS coordinates
+    - Tip:
+        specification: api.llm.yaml
+        relation: Hazards may have several tips
+          
+Tip:
+  kind: model
+  description:
+    Tips provide useful information for dealing with hazards and warnings
+  fields:
+    - name:
+        kind: string
+    - description:
+        kind: html document
+  relationships:
+    - Hazard:
+        specification: api.llm.yaml
+        relation: Tips may be useful for several hazards
+
+Location:
+  kind: model
+  description:
+    Any significant location that would be of interest to users
+  fields:
+    - name:
+        kind: string
+    - type:
+        options:
+          - National Park
+          - Region
+    - coordinates:
+        kind: latitude and longitude
+    - description:
+        optional: true
+        kind: string
+    - image:
+        optional: true
+        kind: string

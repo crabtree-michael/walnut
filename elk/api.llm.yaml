@@ -1,0 +1,32 @@
+api:
+  kind: api
+  folder: api/
+  cors:
+    allowed:
+      - http://localhost:5173
+      - domains defined in infra.llm.yaml
+  framework: 
+    django:
+      virutal_env: .venv
+      database: postgres
+  build:
+    - docker image
+  environments:
+    - local:
+        provider: docker compose
+  models:
+    - Hazard:
+        speficiation: models.llm.yaml 
+    - Tip:
+        specfiication: models.llm.yaml
+  requirements:
+    - Find Hazards:
+        description: 
+          Clients should be able to find all hazards at a specified GPS point
+    - Add Hazards:
+        description:
+          Admin users should be able to add a hazard
+    - Add Hazard Presentation:
+        description:
+          Admin users should be able to add a hazard presentation 
+          by specifying a point and radius

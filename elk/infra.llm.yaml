@@ -1,0 +1,37 @@
+infra:
+  folder: infra
+  provider: aws
+  framework: terraform
+  services:
+    api:
+      folder: api
+      uses:
+        rds:
+          instances: 1
+          size: small
+        ecs:
+          instances: 1
+          size: small
+          runs: docker image output of api.llm.yaml
+        route 53:
+          domain: elk-api.macmail.app
+      environment:
+        - database connection parameters:
+            secret: true
+    webpage:
+      folder: 
+      uses:
+        s3:
+          stores: compiled javascript of web application from webpage.llm.yaml
+          public: true
+          domain: elk.macmail.app
+      environment:
+        - api base url:
+            ref: services api route 53 domain 
+        - google maps api key defined in webpage/envs/local.env
+
+
+    
+    
+      
+

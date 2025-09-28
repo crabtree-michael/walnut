@@ -1,0 +1,91 @@
+scraper:
+  folder: scraper/
+  lang: 
+    python:
+      venv: scraper/.venv
+      requirements: requirements.txt
+  objective:
+    Use open-source information about park safety to compile a data set for Elk
+  architecture:
+    components:
+      - page finder
+      - downloader
+      - parser
+      - inserter
+
+page finder:
+  ## Disable building page finder for now
+  ## It is a nice to have. A list of urls can just be provided for now.
+  build: false 
+  objective:
+    Identity trusted webpages on the internet that have accurate park safety information
+  output:
+    - urls
+
+downloader:
+  objective:
+    Download HTML webpages to a folder
+  input:
+    - page finder urls
+  output:
+    - html documents
+  requirements:
+    - re-runnable:
+        If the url in input has already been downloaded, do not download it again
+    - graceful error handling:
+        One url failing to download should not stop all urls from failing to download
+        Failed url should be logged. Because of re-runnable requirement, the original input
+        can just be re-run by user.
+
+parser:
+  objective:
+    Use on-device large language model to transform HTML documents to hazards, locations, and tips.
+  input:
+    - downloader html documents
+  output:
+    - json:
+        one file per input document: each input document should output a serialized json
+        model speficiation: all models are specified in models.llm.yaml
+        structure:
+          - tips: 
+              type: array of Tips
+          - hazards:
+              type: array of Hazards
+          - locations:
+              type: array of locations
+  large language model:
+    access: 
+      description: Assume ollama is running locally
+      host: 127.0.0.1
+      port: 11434
+    model: gpt-oss:20b
+    prompt:
+      - Explain the elk system to the llm.
+      - Explain the hazard, locations, and tip models to the llm.
+      - Explain the objective for this query
+      - Mark the beginning of the document
+      - Insert document
+      - Mark the end of the document
+  requirements:
+    - re-generate:
+        Every time the script is run, if the JSON file is already generated, re-generate it.
+    - include presentations:
+        If a hazard is present in a mentioned location, a presentation array should be included in the
+        hazards object with the location.
+    - omit coordinates:
+        Coordinates should be omitted if they are not mentioned in the document
+    - strip documents:
+        description: HTML documents should be stripped of all HTML tags and syntax. Only the textual elements of the document should be included. This will reduce tokenization time for the LLM.
+        implementation:
+          package: beautiful soup
+          include: text on any element in the HTML document
+          exclude: code
+    - promompt debugging:
+        Provide an option so that the entirety of the prompt for the first document will be logged
+
+inserter:
+  ## We will build this after we get the downloader and the parser are working
+  build: false
+  objective: 
+    Insert json files into the api database
+  
