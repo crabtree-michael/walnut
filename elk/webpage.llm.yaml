@@ -65,6 +65,8 @@ location:
       cases:
         - no hazards:
             Display "No hazards reported at this location"
+        - hazard location is null:
+            Do not show any location information for that hazard
     requirements:
       - query api for hazards and tips:
         description:

@@ -1,4 +1,4 @@
-import { Hazard } from '../types';
+import type { Hazard, HazardPresentation, LocationSummary } from '../types';
 import './HazardCard.css';
 
 const SEVERITY_COLORS: Record<Hazard['severity'], string> = {
@@ -19,6 +19,11 @@ interface HazardCardProps {
 }
 
 export function HazardCard({ hazard }: HazardCardProps) {
+  const presentationsWithLocation = hazard.presentations.filter(
+    (presentation): presentation is HazardPresentation & { location: LocationSummary } =>
+      presentation.location != null
+  );
+
   return (
     <article className="hazard-card">
       <header>
@@ -44,13 +49,13 @@ export function HazardCard({ hazard }: HazardCardProps) {
           </ul>
         </section>
       )}
-      {!!hazard.presentations.length && (
+      {!!presentationsWithLocation.length && (
         <section className="hazard-card__section">
           <h4>Where</h4>
           <ul>
-            {hazard.presentations.map((presentation) => (
+            {presentationsWithLocation.map((presentation) => (
               <li key={presentation.id}>
-                {presentation.location ? presentation.location.name : 'Unnamed area'}
+                {presentation.location.name}
                 {presentation.notes && <span className="hazard-card__note">{presentation.notes}</span>}
               </li>
             ))}
