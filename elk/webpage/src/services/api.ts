@@ -11,7 +11,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export async function fetchHazards(params: HazardQueryParams): Promise<Hazard[]> {
-  const url = new URL('/hazards', baseUrl);
+  const url = new URL('/hazards/', baseUrl);
   url.searchParams.set('latitude', params.latitude.toString());
   url.searchParams.set('longitude', params.longitude.toString());
   const response = await fetch(url.toString(), {

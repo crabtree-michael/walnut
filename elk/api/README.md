@@ -15,11 +15,9 @@ python manage.py runserver
 
 Set the following environment variables when running against PostgreSQL:
 
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `POSTGRES_HOST`
-- `POSTGRES_PORT`
+```bash
+export DATABASE_URL='postgres://elk:elk@localhost:5433/elk' 
+```
 
 When running via Docker, use:
 

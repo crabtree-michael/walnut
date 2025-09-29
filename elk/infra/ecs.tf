@@ -182,8 +182,9 @@ resource "aws_ecs_task_definition" "api" {
       ]
       environment = [
         { name = "DJANGO_SETTINGS_MODULE", value = "elk_api.settings" },
-        { name = "DJANGO_ALLOWED_HOSTS", value = local.api_domain },
+        { name = "DJANGO_ALLOWED_HOSTS", value = "${local.api_domain},${local.web_domain}" },
         { name = "INFRA_API_DOMAIN", value = local.api_domain },
+        { name = "WEBPAGE_DOMAIN", value = local.web_domain },
         { name = "POSTGRES_DB", value = var.db_name },
         { name = "POSTGRES_USER", value = var.db_username },
         { name = "POSTGRES_HOST", value = aws_db_instance.api.address },

@@ -13,6 +13,11 @@ infra:
           instances: 1
           size: small
           runs: docker image output of api.llm.yaml
+          environment:
+            - database url
+            - allowed hosts
+              - webpage domain
+              - api domain
         route 53:
           domain: elk-api.macmail.app
       environment:

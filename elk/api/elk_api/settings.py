@@ -19,6 +19,8 @@ ALLOWED_HOSTS: List[str] = [host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = ["https://elk-api.macmail.app"]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -102,6 +104,11 @@ CORS_ALLOWED_ORIGINS = [
 infra_domain = os.getenv("INFRA_API_DOMAIN")
 if infra_domain:
     CORS_ALLOWED_ORIGINS.append(f"https://{infra_domain}")
+web_domain = os.getenv("WEBPAGE_DOMAIN")
+if web_domain:
+    CORS_ALLOWED_ORIGINS.append(f"https://{web_domain}")
+
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
