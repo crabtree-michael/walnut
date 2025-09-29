@@ -51,14 +51,13 @@ export default function LocationPage() {
 
   return (
     <div className="location-page">
+      <Link to="/" className="location-page__back">
+        Back to search
+      </Link>
+
       <header className="location-page__header">
-        <div>
-          <h1>{heading}</h1>
-          {description && <p className="location-page__address">{description}</p>}
-        </div>
-        <Link to="/" className="location-page__back">
-          ← Back to search
-        </Link>
+        <h1>{heading}</h1>
+        {description && <p className="location-page__address">{description}</p>}
       </header>
 
       {placeError && <p className="location-page__error">Unable to load this location right now.</p>}

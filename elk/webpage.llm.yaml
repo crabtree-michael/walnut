@@ -55,6 +55,8 @@ homepage:
 location:
   kind: interface
   elements:
+    back button: 
+      location: top left
     summary:
       description:
         A brief amount of information is presented about the location
