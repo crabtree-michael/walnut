@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchHazards } from '../services/api';
@@ -10,8 +10,18 @@ import './LocationPage.css';
 
 export default function LocationPage() {
   const { placeId } = useParams<{ placeId: string }>();
-  const [shareMessage, setShareMessage] = useState<string | null>(null);
-  const shareMessageTimeout = useRef<number>();
+  const [shareAvailable, setShareAvailable] = useState(() => {
+    if (typeof navigator === 'undefined') {
+      return false;
+    }
+
+    const navigatorWithShare = navigator as Navigator & {
+      share?: (data: ShareData) => Promise<void>;
+      clipboard?: Clipboard;
+    };
+
+    return Boolean(navigatorWithShare.share || navigatorWithShare.clipboard?.writeText);
+  });
 
   const {
     data: place,
@@ -52,14 +62,6 @@ export default function LocationPage() {
 
   const showEmptyState = !hazardsLoading && !hazardsError && (hazards?.length ?? 0) === 0;
 
-  useEffect(() => {
-    return () => {
-      if (shareMessageTimeout.current) {
-        window.clearTimeout(shareMessageTimeout.current);
-      }
-    };
-  }, []);
-
   const shareUrl = useMemo(() => {
     if (!placeId) {
       return '';
@@ -67,16 +69,8 @@ export default function LocationPage() {
     return buildLocationUrl(placeId);
   }, [placeId]);
 
-  function setTimedShareMessage(message: string) {
-    setShareMessage(message);
-    if (shareMessageTimeout.current) {
-      window.clearTimeout(shareMessageTimeout.current);
-    }
-    shareMessageTimeout.current = window.setTimeout(() => setShareMessage(null), 3200);
-  }
-
   async function handleShare() {
-    if (!placeId || !shareUrl) {
+    if (!placeId || !shareUrl || !shareAvailable) {
       return;
     }
 
@@ -91,38 +85,36 @@ export default function LocationPage() {
           title: place?.name ?? 'Elk location',
           url: shareUrl
         });
-        setTimedShareMessage('Share dialog opened');
         return;
       }
 
       if (navigatorWithShare.clipboard?.writeText) {
         await navigatorWithShare.clipboard.writeText(shareUrl);
-        setTimedShareMessage('Link copied to your clipboard');
         return;
       }
 
       throw new Error('No share method available');
     } catch (error) {
       console.error('Failed to share link', error);
-      setTimedShareMessage('Unable to share this link');
     }
   }
 
   return (
     <div className="location-page">
-      <Link to="/" className="location-page__back">
-        Back to search
-      </Link>
-
-      <header className="location-page__header">
-        <h1>{heading}</h1>
-        {description && <p className="location-page__address">{description}</p>}
-        {placeId && (
+      <nav className="location-page__nav" aria-label="Location navigation">
+        <Link to="/" className="location-page__back">
+          Back to search
+        </Link>
+        {placeId && shareAvailable && (
           <button type="button" className="location-page__share" onClick={handleShare}>
             Share this page
           </button>
         )}
-        {shareMessage && <p className="location-page__share-status">{shareMessage}</p>}
+      </nav>
+
+      <header className="location-page__header">
+        <h1>{heading}</h1>
+        {description && <p className="location-page__address">{description}</p>}
       </header>
 
       {placeError && <p className="location-page__error">Unable to load this location right now.</p>}

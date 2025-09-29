@@ -55,8 +55,14 @@ homepage:
 location:
   kind: interface
   elements:
-    back button: 
-      location: top left
+    nav bar:
+      location: top
+      back button: 
+        location: left
+      share:
+        location: right
+        cases:
+          - error sharing: Do not display
     summary:
       description:
         A brief amount of information is presented about the location

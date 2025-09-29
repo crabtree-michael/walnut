@@ -4,6 +4,14 @@
   gap: 1.5rem;
 }
 
+.location-page__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .location-page__header {
   display: flex;
   flex-direction: column;
@@ -28,12 +36,6 @@
 
 .location-page__share:hover {
   background: #0d1b2a;
-}
-
-.location-page__share-status {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #415a77;
 }
 
 .location-page__header h1 {
