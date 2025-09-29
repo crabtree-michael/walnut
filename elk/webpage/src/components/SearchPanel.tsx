@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlacesAutocomplete } from '../hooks/usePlacesAutocomplete';
+import { buildLocationPath } from '../lib/paths';
 import './SearchPanel.css';
 
 export function SearchPanel() {
@@ -14,7 +15,7 @@ export function SearchPanel() {
     event.preventDefault();
     const firstSuggestion = suggestions[0];
     if (firstSuggestion) {
-      navigate(`/location/${firstSuggestion.placeId}`);
+      navigate(buildLocationPath(firstSuggestion.placeId));
     }
   }
 
@@ -44,7 +45,7 @@ export function SearchPanel() {
               <button
                 type="button"
                 className="search-panel__suggestion"
-                onClick={() => navigate(`/location/${suggestion.placeId}`)}
+                onClick={() => navigate(buildLocationPath(suggestion.placeId))}
               >
                 {suggestion.description}
               </button>

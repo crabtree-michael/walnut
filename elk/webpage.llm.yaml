@@ -80,4 +80,12 @@ location:
                 required: true
               longitude:
                 required: true
+      - should be shareable:
+          description:
+            Users should be able to share the url of the location page with other users
+            The other user should end up on the same page
+          implementation:
+            stable identifier: google places identifier
+            routing: /location/{identifer}
+          
       
