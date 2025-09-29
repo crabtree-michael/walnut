@@ -60,6 +60,9 @@ location:
         A brief amount of information is presented about the location
     hazards:
       kind: list
+      cases:
+        - no hazards:
+            Display "No hazards reported at this location"
     requirements:
       - query api for hazards and tips:
         description:

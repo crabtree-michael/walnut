@@ -69,7 +69,7 @@ export default function LocationPage() {
 
       {(placeLoading || hazardsLoading) && <div className="location-page__loading">Loading hazard data…</div>}
 
-      {place?.location && !showEmptyState && (
+      {place?.location && (
         <section className="location-page__summary">
           <div>
             <h2>Coordinates</h2>
@@ -80,6 +80,10 @@ export default function LocationPage() {
             <p>{hazards?.length ?? 0}</p>
           </div>
         </section>
+      )}
+
+      {showEmptyState && (
+        <p className="location-page__empty">No hazards reported at this location</p>
       )}
 
       {!!hazards?.length && (
