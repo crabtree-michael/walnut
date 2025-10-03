@@ -111,6 +111,7 @@ def call_llm(prompt: str, *, host: str, port: int, model: str, timeout: float = 
     try:
         data = response.json()
     except ValueError as exc:
+        print(response)
         raise RuntimeError("LLM response was not valid JSON") from exc
 
     if "response" not in data:

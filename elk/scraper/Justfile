@@ -1,17 +1,16 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
-set working-directory := ".."
 
 # Download HTML documents listed in output/urls.txt into output/html
 download:
     mkdir -p output/html
-    python3 scraper/downloader.py --urls-file output/urls.txt --output-dir output/html
+    python3 downloader.py --urls-file output/urls.txt --output-dir output/html
 
 # Parse HTML documents in output/html into structured JSON under output/json
 parse:
     mkdir -p output/json
-    python3 scraper/parser.py --input-dir output/html --output-dir output/json
+    python3 parser.py --input-dir output/html --output-dir output/json
 
 # Parse with full prompt logging for the first document
 debug-prompt:
     mkdir -p output/json
-    python3 scraper/parser.py --input-dir output/html --output-dir output/json --log-first-prompt
+    python3 parser.py --input-dir output/html --output-dir output/json --log-first-prompt

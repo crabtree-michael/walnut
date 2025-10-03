@@ -43,7 +43,8 @@ downloader:
   input:
     - page finder urls
   output:
-    - html documents
+    - html documents:
+        folder: output/html/<santized_url_name>.html
   requirements:
     - re-runnable:
         If the url in input has already been downloaded, do not download it again
