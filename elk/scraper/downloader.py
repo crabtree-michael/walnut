@@ -7,19 +7,17 @@ The downloader satisfies the requirements defined in ``scraper.llm.yaml`` by:
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional
-from urllib.parse import urlparse
 
 import requests
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "data" / "html"
+DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "output" / "html"
 
 
 @dataclass(frozen=True)
@@ -44,24 +42,19 @@ def sanitize_component(component: str) -> str:
     return clean or "resource"
 
 
-def build_document_path(url: str, output_dir: Path) -> Path:
-    """Map a URL to a deterministic output path inside ``output_dir``."""
+_SCHEME_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*://")
 
-    parsed = urlparse(url)
-    hostname = sanitize_component(parsed.netloc or "unknown-host")
-    url_path = parsed.path or "/"
-    parts = [sanitize_component(part) for part in url_path.split("/") if part]
-    if not parts:
-        parts = ["index"]
-    filename = parts[-1]
-    stem = filename.rsplit(".", 1)[0]
-    suffix = filename.rsplit(".", 1)[1] if "." in filename else "html"
-    if parsed.query:
-        digest = hashlib.sha256(parsed.query.encode('utf-8')).hexdigest()[:10]
-        stem = f"{stem}-{digest}"
-    new_filename = f"{stem}.{suffix}"
-    relative_parts = [hostname, *parts[:-1], new_filename]
-    return output_dir.joinpath(*relative_parts)
+
+def build_document_path(url: str, output_dir: Path) -> Path:
+    """Map a URL to ``output/html/<sanitized_url_name>.html``."""
+
+    normalized = _SCHEME_PATTERN.sub("", url).replace("/", "-")
+    candidate = sanitize_component(normalized)
+    if not candidate:
+        candidate = "document"
+    if not candidate.endswith(".html"):
+        candidate = f"{candidate}.html"
+    return output_dir / candidate
 
 
 def ensure_directory(path: Path) -> None:
