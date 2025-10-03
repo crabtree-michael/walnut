@@ -1,0 +1,24 @@
+elk:
+  objective:
+    Centralize park safety information into a website.
+  systems:
+    - api
+    - webpage
+    - scraper
+
+api: 
+  description:
+    Provides an API for serving park safety information
+  specification: api.llm.yaml
+
+webpage:
+  description:
+    Interacive webpage for users to find locations and potential
+    safety concerns in that area
+  specification: api.llm.yaml
+
+scraper:
+  description: 
+    Scraps safety information from public knowledge into the API's database
+  specification: scraper.llm.yaml
+
