@@ -1,0 +1,11 @@
+set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
+
+# Download HTML documents listed in output/urls.txt into output/html
+download:
+    mkdir -p output/html
+    python3 -m scraper download --urls-file output/urls.txt --output-dir output/html
+
+# Parse HTML documents in output/html into structured JSON under output/json
+parse:
+    mkdir -p output/json
+    python3 -m scraper parse --input-dir output/html --output-dir output/json
