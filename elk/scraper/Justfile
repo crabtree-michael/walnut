@@ -1,4 +1,5 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
+set working-directory := ".."
 
 # Download HTML documents listed in output/urls.txt into output/html
 download:
