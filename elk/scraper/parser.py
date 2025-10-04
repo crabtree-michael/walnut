@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+import sys
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
@@ -110,30 +111,49 @@ def build_prompt(document_text: str) -> str:
     return PROMPT_TEMPLATE.format(document=document_text)
 
 
-def call_llm(prompt: str, *, client: Client, model: str, timeout: float) -> LLMOutput:
-    def _generate() -> dict:
-        return client.generate(model=model, prompt=prompt, stream=False)
+def call_llm(
+    prompt: str,
+    *,
+    client: Client,
+    model: str,
+    stream_thinking: bool,
+    document_name: str,
+) -> LLMOutput:
+    try:
+        if stream_thinking:
+            responses: List[str] = []
+            thinking_parts: List[str] = []
+            header_printed = False
+            for chunk in client.generate(model=model, prompt=prompt, stream=True, think=True):
+                thinking_chunk = getattr(chunk, "thinking", None)
+                if thinking_chunk:
+                    if not header_printed:
+                        print(f"[thinking:{document_name}] ", end="", flush=True)
+                        header_printed = True
+                    sys.stdout.write(thinking_chunk)
+                    sys.stdout.flush()
+                    thinking_parts.append(thinking_chunk)
+                response_chunk = getattr(chunk, "response", None)
+                if response_chunk:
+                    responses.append(response_chunk)
+            if header_printed:
+                sys.stdout.write("\n")
+                sys.stdout.flush()
+            content = "".join(responses).strip()
+            if not content:
+                raise RuntimeError("LLM response was empty")
+            thinking = "".join(thinking_parts).strip() or None
+            return LLMOutput(content=content, thinking=thinking)
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(_generate)
-        try:
-            data = future.result(timeout=timeout)
-        except FuturesTimeoutError as exc:
-            future.cancel()
-            raise RuntimeError(f"LLM request exceeded timeout of {timeout} seconds") from exc
-        except Exception as exc:  # pragma: no cover - network errors depend on runtime
-            raise RuntimeError(f"LLM request failed: {exc}") from exc
+        data = client.generate(model=model, prompt=prompt, stream=False, think=False)
+    except Exception as exc:  # pragma: no cover - runtime failures depend on environment
+        raise RuntimeError(f"LLM request failed: {exc}") from exc
 
-    if not isinstance(data, dict) or "response" not in data:
-        raise RuntimeError("LLM response missing 'response' field")
-
-    content = str(data.get("response", "")).strip()
+    content = (getattr(data, "response", "") or "").strip()
     if not content:
         raise RuntimeError("LLM response was empty")
-
-    thinking_raw = data.get("thinking")
+    thinking_raw = getattr(data, "thinking", None)
     thinking = thinking_raw.strip() if isinstance(thinking_raw, str) and thinking_raw.strip() else None
-
     return LLMOutput(content=content, thinking=thinking)
 
 
@@ -177,8 +197,18 @@ def parse_document(
     if log_prompt:
         LOGGER.info("Prompt for %s:\n%s", html_path, prompt)
 
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    document_name = html_path.name
+    print(f"[llm-request] {timestamp} {document_name}", flush=True)
+
     try:
-        llm_output = call_llm(prompt, client=client, model=model, timeout=timeout)
+        llm_output = call_llm(
+            prompt,
+            client=client,
+            model=model,
+            stream_thinking=show_thinking,
+            document_name=document_name,
+        )
     except RuntimeError as exc:
         error = str(exc)
         LOGGER.error("LLM invocation failed for %s: %s", html_path, error)

@@ -59,6 +59,8 @@ parser:
   input:
     - downloader html documents
   output:
+    - standard out:
+      - timestamp for any LLM request with corresponding document name
     - json:
         one file per input document: each input document should output a serialized json
         model speficiation: all models are specified in models.llm.yaml
@@ -103,6 +105,7 @@ parser:
         Provide an option so that the entirety of the prompt for the first document will be logged
     - thinking flag:
         When the thinking flag is enabled, output model thinking
+        Stream thinking responses
 
 inserter:
   ## We will build this after we get the downloader and the parser are working
