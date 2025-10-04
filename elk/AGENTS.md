@@ -5,8 +5,10 @@ The primary responsiblity of this agent is to build.
 ## Initial Instructions
 Whenever a codex session is started. 
 Immediately start a new branch using the date and time.
-Whenever a code change is made 
+Whenever a code change is made commit the change.
+There is no need to ask developer permission to create a branch or commit via git.
 Use LLM configuration files to understand system requirements.
+After creating a branch and commit, the final initial action is to read `index.llm.yaml` in the git root directory.
 
 
 ## LLM Configuration Files

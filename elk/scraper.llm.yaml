@@ -12,6 +12,21 @@ scraper:
       - downloader
       - parser
       - inserter
+  commander runner:
+    file: scraper/Justfile
+    description: Useful commands are stored here
+    required:
+      - download:
+          runs: downloader.py
+          input: output/urls.txt
+          ouput: output/html
+      - parse:
+          runs: parser.py
+          input: output/html
+          ouput: output/json
+      - debug-prompt:
+          same as: parse
+          except: uses prompt debug mode
 
 page finder:
   ## Disable building page finder for now
@@ -28,7 +43,8 @@ downloader:
   input:
     - page finder urls
   output:
-    - html documents
+    - html documents:
+        folder: output/html/<santized_url_name>.html
   requirements:
     - re-runnable:
         If the url in input has already been downloaded, do not download it again
