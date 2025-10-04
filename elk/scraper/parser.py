@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Set
 
-import requests
 from bs4 import BeautifulSoup
+from ollama import Client
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,28 +36,38 @@ class ParseResult:
         return self.error is None and self.json_path is not None
 
 
-PROMPT_TEMPLATE = """You are assisting the Elk project, which centralises park safety information.
-Elk exposes Hazards, Tips, and Locations as defined below. Produce data that can be inserted
-into the Elk API without inventing unsupported structure.
+@dataclass(frozen=True)
+class LLMOutput:
+    """Captures the LLM content and any optional reasoning."""
 
-Model definitions:
-- Hazard: name (string), severity (low|medium|high), type (animal|event|weather|disease), presentations (optional array of presentation objects). Each presentation represents how the hazard manifests at a particular location and may contain: location (string name), description (string), boundary (collection of GPS coordinates if explicitly specified). Include the presentations array whenever the hazard occurs at one or more mentioned locations.
-- Tip: name (string) and description (HTML allowed). Tips should be associated with hazards when appropriate.
-- Location: name (string), type (National Park|Region), optional coordinates (latitude and longitude), optional description (string), optional image (string URL).
+    content: str
+    thinking: Optional[str] = None
 
-Objective:
-Extract Hazards, Tips, and Locations that are explicitly grounded in the provided document.
-Only report information present in the text. Omit coordinates when the document does not
-state them. If a field is not present in the document, leave it out.
 
-Output instructions:
-- Return a JSON object with exactly the keys "hazards", "tips", and "locations".
-- Use arrays for each key, even when empty.
-- Ensure the JSON is valid and does not include code fences or commentary.
-
+PROMPT_TEMPLATE = """
 <document>
 {document}
 </document>
+
+
+You are assisting the Elk project, which centralises park safety information.
+
+Required output:
+- Return a JSON object with exactly the keys "hazards", "tips", and "locations".
+- Use arrays for each key. Emit an empty array when no entries exist.
+- Reply with raw JSON only. Do not include code fences or commentary.
+
+Model definitions:
+- Hazard: name (string), severity (low|medium|high), type (animal|event|weather|disease), presentations (array when present). Each presentation describes how the hazard manifests at a specific location and may include: location (string), description (string), boundary (explicit GPS coordinate collection when the document states it).
+- Tip: name (string) and description (HTML allowed). Tips may reference applicable hazards.
+- Location: name (string), type (National Park|Region), optional coordinates (latitude and longitude), optional description (string), optional image (URL).
+
+Objective:
+- Extract Hazards, Tips, and Locations grounded in the document content.
+- Omit coordinates unless the document explicitly states them.
+- Include the presentations array on hazards whenever they relate to one or more mentioned locations.
+
+Return the JSON definition for this document now.
 """
 
 
@@ -99,25 +111,50 @@ def build_prompt(document_text: str) -> str:
     return PROMPT_TEMPLATE.format(document=document_text)
 
 
-def call_llm(prompt: str, *, host: str, port: int, model: str, timeout: float = 60.0) -> str:
-    url = f"http://{host}:{port}/api/generate"
-    payload = {"model": model, "prompt": prompt, "stream": False}
+def call_llm(
+    prompt: str,
+    *,
+    client: Client,
+    model: str,
+    stream_thinking: bool,
+    document_name: str,
+) -> LLMOutput:
     try:
-        response = requests.post(url, json=payload, timeout=timeout)
-        response.raise_for_status()
-    except requests.RequestException as exc:
+        if stream_thinking:
+            responses: List[str] = []
+            thinking_parts: List[str] = []
+            header_printed = False
+            for chunk in client.generate(model=model, prompt=prompt, stream=True, think=True):
+                thinking_chunk = getattr(chunk, "thinking", None)
+                if thinking_chunk:
+                    if not header_printed:
+                        print(f"[thinking:{document_name}] ", end="", flush=True)
+                        header_printed = True
+                    sys.stdout.write(thinking_chunk)
+                    sys.stdout.flush()
+                    thinking_parts.append(thinking_chunk)
+                response_chunk = getattr(chunk, "response", None)
+                if response_chunk:
+                    responses.append(response_chunk)
+            if header_printed:
+                sys.stdout.write("\n")
+                sys.stdout.flush()
+            content = "".join(responses).strip()
+            if not content:
+                raise RuntimeError("LLM response was empty")
+            thinking = "".join(thinking_parts).strip() or None
+            return LLMOutput(content=content, thinking=thinking)
+
+        data = client.generate(model=model, prompt=prompt, stream=False, think=False)
+    except Exception as exc:  # pragma: no cover - runtime failures depend on environment
         raise RuntimeError(f"LLM request failed: {exc}") from exc
 
-    try:
-        data = response.json()
-    except ValueError as exc:
-        print(response)
-        raise RuntimeError("LLM response was not valid JSON") from exc
-
-    if "response" not in data:
-        raise RuntimeError("LLM response missing 'response' field")
-
-    return data["response"].strip()
+    content = (getattr(data, "response", "") or "").strip()
+    if not content:
+        raise RuntimeError("LLM response was empty")
+    thinking_raw = getattr(data, "thinking", None)
+    thinking = thinking_raw.strip() if isinstance(thinking_raw, str) and thinking_raw.strip() else None
+    return LLMOutput(content=content, thinking=thinking)
 
 
 def parse_llm_json(content: str) -> dict:
@@ -141,11 +178,11 @@ def parse_document(
     *,
     html_root: Optional[Path],
     output_dir: Path,
-    host: str,
-    port: int,
+    client: Client,
     model: str,
     timeout: float,
     log_prompt: bool,
+    show_thinking: bool,
 ) -> ParseResult:
     try:
         html_content = html_path.read_text(encoding="utf-8")
@@ -160,17 +197,30 @@ def parse_document(
     if log_prompt:
         LOGGER.info("Prompt for %s:\n%s", html_path, prompt)
 
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    document_name = html_path.name
+    print(f"[llm-request] {timestamp} {document_name}", flush=True)
+
     try:
-        llm_output = call_llm(prompt, host=host, port=port, model=model, timeout=timeout)
+        llm_output = call_llm(
+            prompt,
+            client=client,
+            model=model,
+            stream_thinking=show_thinking,
+            document_name=document_name,
+        )
     except RuntimeError as exc:
         error = str(exc)
         LOGGER.error("LLM invocation failed for %s: %s", html_path, error)
         return ParseResult(html_path=html_path, json_path=None, error=error)
 
+    if show_thinking and llm_output.thinking:
+        LOGGER.info("Model thinking for %s:\n%s", html_path, llm_output.thinking)
+
     try:
-        parsed = parse_llm_json(llm_output)
-    except json.JSONDecodeError as exc:
-        error = f"Invalid JSON from LLM for {html_path}: {exc}"
+        parsed = parse_llm_json(llm_output.content)
+    except json.JSONDecodeError:
+        error = f"Invalid JSON from LLM for {html_path}: {llm_output.content}"
         LOGGER.error(error)
         return ParseResult(html_path=html_path, json_path=None, error=error)
 
@@ -186,11 +236,11 @@ def run_parser(
     *,
     html_root: Optional[Path],
     output_dir: Path,
-    host: str,
-    port: int,
+    client: Client,
     model: str,
     timeout: float,
     log_first_prompt: bool,
+    show_thinking: bool,
 ) -> List[ParseResult]:
     results: List[ParseResult] = []
     for index, html_path in enumerate(html_documents):
@@ -200,11 +250,11 @@ def run_parser(
                 html_path,
                 html_root=html_root,
                 output_dir=output_dir,
-                host=host,
-                port=port,
+                client=client,
                 model=model,
                 timeout=timeout,
                 log_prompt=log_prompt,
+                show_thinking=show_thinking,
             )
         )
     return results
@@ -222,10 +272,17 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL, help="LLM model identifier")
     parser.add_argument("--timeout", type=float, default=90.0, help="LLM request timeout in seconds")
     parser.add_argument("--log-first-prompt", action="store_true", help="Log the full prompt for the first document")
+    parser.add_argument("--thinking", action="store_true", help="Output model thinking when provided")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     configure_logging(args.verbose)
+
+    client_kwargs = {"host": f"http://{args.host}:{args.port}"}
+    try:
+        client = Client(timeout=args.timeout, **client_kwargs)
+    except TypeError:
+        client = Client(**client_kwargs)
 
     html_root = args.input_dir.resolve() if args.input_dir else None
     documents = list_html_documents(args.input_dir, [path.resolve() for path in args.html])
@@ -237,11 +294,11 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         documents,
         html_root=html_root,
         output_dir=args.output_dir.resolve(),
-        host=args.host,
-        port=args.port,
+        client=client,
         model=args.model,
         timeout=args.timeout,
         log_first_prompt=args.log_first_prompt,
+        show_thinking=args.thinking,
     )
 
     failures = [result for result in results if result.error]
