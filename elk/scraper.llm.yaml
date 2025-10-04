@@ -74,14 +74,17 @@ parser:
       description: Assume ollama is running locally
       host: 127.0.0.1
       port: 11434
+      use python package: ollama
     model: gpt-oss:20b
     prompt:
-      - Explain the elk system to the llm.
-      - Explain the hazard, locations, and tip models to the llm.
-      - Explain the objective for this query
       - Mark the beginning of the document
       - Insert document
       - Mark the end of the document
+      - Explain the elk system to the llm.
+      - Explain the required output
+      - Explain the hazard, locations, and tip models to the llm.
+      - Explain the objective for this query
+      - Request JSON defintion
   requirements:
     - re-generate:
         Every time the script is run, if the JSON file is already generated, re-generate it.
@@ -98,6 +101,8 @@ parser:
           exclude: code
     - promompt debugging:
         Provide an option so that the entirety of the prompt for the first document will be logged
+    - thinking flag:
+        When the thinking flag is enabled, output model thinking
 
 inserter:
   ## We will build this after we get the downloader and the parser are working
