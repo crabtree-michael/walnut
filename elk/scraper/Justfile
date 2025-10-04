@@ -8,7 +8,7 @@ download:
 # Parse HTML documents in output/html into structured JSON under output/json
 parse:
     mkdir -p output/json
-    python3 parser.py --input-dir output/html --output-dir output/json
+    python3 parser.py --input-dir output/html --output-dir output/json --timeout 300
 
 # Parse with full prompt logging for the first document
 debug-prompt:
