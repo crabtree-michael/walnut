@@ -19,7 +19,7 @@ webpage:
     google maps api:
       for: looking up points of interest
       specification: external
-      key: AIzaSyBj_RQC6lyEmbeiE13YjtFGTv7H8mRiQ64
+      key: see local.env
   style:
     colors:
       - white
