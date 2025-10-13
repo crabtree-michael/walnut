@@ -3,6 +3,9 @@ Hazard:
   description:
     Hazards are any abstract risk that could occur.
   fields:
+    - id:
+        kind: uuid
+        primary key: true
     - name:
         kind: string
     - severity: 
@@ -46,6 +49,9 @@ Location:
   description:
     Any significant location that would be of interest to users
   fields:
+    - id:
+        kind: uuid
+        primary key: true
     - name:
         kind: string
     - type:
