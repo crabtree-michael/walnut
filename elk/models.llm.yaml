@@ -60,3 +60,8 @@ Location:
     - image:
         optional: true
         kind: string
+    - google maps id:
+        optional: true
+        kind: string
+    - boundary:
+        kind: Collection of GPS coordinates

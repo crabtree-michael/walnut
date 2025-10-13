@@ -43,3 +43,11 @@ api:
         description:
           Admin users should be able to add a hazard presentation 
           by specifying a point and radius
+    - Location Name Search:
+        description:
+          Users should be able to search locations in the API by name
+          The search should be somewhat fuzzy (3/5)
+    - Hazard Name Search:
+        description:
+          Users should be able to search hazards in the API by name
+          The search should be somewhat fuzzy (3/5)

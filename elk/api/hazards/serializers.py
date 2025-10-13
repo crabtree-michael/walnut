@@ -17,7 +17,17 @@ class TipSerializer(serializers.ModelSerializer):
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ["id", "name", "type", "latitude", "longitude", "description", "image"]
+        fields = [
+            "id",
+            "name",
+            "type",
+            "latitude",
+            "longitude",
+            "description",
+            "image",
+            "google_maps_id",
+            "boundary",
+        ]
 
 
 class HazardPresentationReadSerializer(serializers.ModelSerializer):
@@ -53,6 +63,12 @@ class HazardSerializer(serializers.ModelSerializer):
             "tips",
             "presentations",
         ]
+
+
+class HazardSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hazard
+        fields = ["id", "name", "severity", "type", "description"]
 
 
 class HazardCreateSerializer(serializers.ModelSerializer):

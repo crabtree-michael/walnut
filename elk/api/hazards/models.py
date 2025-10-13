@@ -34,6 +34,12 @@ class Location(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     description = models.TextField(blank=True)
     image = models.URLField(blank=True)
+    google_maps_id = models.CharField(max_length=255, blank=True)
+    boundary = models.JSONField(
+        help_text="Collection of GPS coordinates describing the area.",
+        default=list,
+        blank=True,
+    )
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
