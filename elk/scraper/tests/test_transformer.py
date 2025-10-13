@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import types
 import unittest
+import uuid
 from dataclasses import dataclass
 from typing import Dict, Optional
 
@@ -161,11 +162,39 @@ class TransformerTests(unittest.TestCase):
         hazard_payload = payload["hazards"][0]
         self.assertTrue(hazard_payload["id"].startswith("new-hazard-"))
         location_payload = payload["locations"][0]
-        self.assertTrue(location_payload["id"].startswith("new-location-"))
+        uuid.UUID(location_payload["id"])  # raises ValueError if invalid
         self.assertEqual(
             location_payload["presentations"][0]["hazard_id"],
             hazard_payload["id"],
         )
+
+    def test_high_level_location_extraction(self) -> None:
+        hydrator = StubHydrator()
+        documents = [
+            {
+                "locations": [
+                    {"name": "Burned areas within Rocky Mountain National Park"},
+                    {"name": "Eagle-Holy Cross Ranger District"},
+                ]
+            },
+            {
+                "locations": [
+                    {"name": "Rocky Mountain National Park"},
+                    {"name": "Eagle-Holy Cross District"},
+                ]
+            },
+        ]
+
+        transformer = Transformer(api_client=None, hydrator=hydrator)
+        payload = transformer.transform_documents(documents)
+
+        names = sorted(location["name"] for location in payload["locations"])
+        self.assertEqual(
+            names,
+            ["Eagle-Holy Cross District", "Rocky Mountain National Park"],
+        )
+        for location in payload["locations"]:
+            uuid.UUID(location["id"])  # ensure new IDs are UUIDs
 
 
 if __name__ == "__main__":  # pragma: no cover

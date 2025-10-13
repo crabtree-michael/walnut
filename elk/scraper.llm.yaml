@@ -122,6 +122,15 @@ transformer:
           endpoints: 
             - Location name search defined in api.llm.yaml
             - Hazard name search defined in api.llm.yaml
+        requirements:
+          - High Level Location Extraction:
+              description:
+                Match input location names to extract high level locations rather then specific locations
+              examples:
+                - inputting `Eagle-Holy Cross Ranger District` and `Eagle-Holy Cross District` yields `Eagle-Holy Cross District`
+                - inputting `Burned areas within Rocky Mountain National Park` and `Rocky Mountain National Park` yields `Rocky Mountain National Park`
+          - Generate UUIDs:
+              If an ID does not exist for location generate a UUID as the ID.
     - hydration:
         description:
           Many documents will only reference locations by name without providing coordinates, boundaries, images, or

@@ -6,10 +6,12 @@ import argparse
 import json
 import logging
 import os
+import re
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from difflib import SequenceMatcher
 
@@ -29,6 +31,19 @@ HAZARD_TYPES = {"animal", "event", "weather", "disease"}
 LOCATION_TYPES = {"national park": "National Park", "region": "Region"}
 FUZZY_MATCH_THRESHOLD = 0.6
 
+LOCATION_STOPWORDS = {
+    "the",
+    "a",
+    "an",
+    "within",
+    "inside",
+    "area",
+    "areas",
+    "burned",
+    "burning",
+    "ranger",
+}
+
 
 def normalize_name(value: str) -> str:
     return value.strip().lower()
@@ -41,6 +56,34 @@ def to_float(value) -> Optional[float]:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def canonicalize_location_name(value: str) -> Tuple[str, ...]:
+    tokens = [token for token in re.findall(r"[a-z0-9]+", value.lower()) if token]
+    filtered = [token for token in tokens if token not in LOCATION_STOPWORDS]
+    if filtered:
+        return tuple(filtered)
+    return tuple(tokens)
+
+
+def location_key(name: str) -> str:
+    tokens = canonicalize_location_name(name)
+    if tokens:
+        return " ".join(tokens)
+    return normalize_name(name)
+
+
+def tokens_subset(subset: Tuple[str, ...], superset: Tuple[str, ...]) -> bool:
+    if not subset or not superset:
+        return False
+    superset_iter = iter(superset)
+    for token in subset:
+        for candidate in superset_iter:
+            if candidate == token:
+                break
+        else:
+            return False
+    return True
 
 
 def normalize_boundary(raw_boundary) -> List[Dict[str, float]]:
@@ -145,6 +188,7 @@ class LocationPresentationAggregate:
 @dataclass
 class AggregatedLocation:
     name: str
+    canonical_tokens: Tuple[str, ...] = field(default_factory=tuple)
     type: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -155,7 +199,26 @@ class AggregatedLocation:
     id: Optional[str] = None
     presentations: Dict[str, LocationPresentationAggregate] = field(default_factory=dict)
 
+    def consider_display_name(self, candidate: Optional[str], *, canonical_tokens: Tuple[str, ...]) -> None:
+        candidate_value = (candidate or "").strip()
+        if not candidate_value:
+            return
+        if not self.name:
+            self.name = candidate_value
+        else:
+            current = self.name.strip()
+            if candidate_value.lower() == " ".join(canonical_tokens):
+                self.name = candidate_value
+            elif len(candidate_value) < len(current):
+                self.name = candidate_value
+        if canonical_tokens and not self.canonical_tokens:
+            self.canonical_tokens = canonical_tokens
+
     def merge(self, payload: dict) -> None:
+        tokens = canonicalize_location_name(payload.get("name", ""))
+        self.consider_display_name(payload.get("name"), canonical_tokens=tokens or self.canonical_tokens)
+        if tokens and not self.canonical_tokens:
+            self.canonical_tokens = tokens
         self.type = self.type or normalize_location_type(payload.get("type"))
         self.latitude = self.latitude if self.latitude is not None else to_float(payload.get("latitude"))
         self.longitude = self.longitude if self.longitude is not None else to_float(payload.get("longitude"))
@@ -179,6 +242,10 @@ class AggregatedLocation:
         presentation.merge(payload)
 
     def merge_api_payload(self, payload: dict) -> None:
+        tokens = canonicalize_location_name(payload.get("name", ""))
+        self.consider_display_name(payload.get("name"), canonical_tokens=tokens or self.canonical_tokens)
+        if tokens and not self.canonical_tokens:
+            self.canonical_tokens = tokens
         self.merge(payload)
         if payload.get("id") is not None:
             self.id = str(payload["id"])
@@ -427,10 +494,10 @@ class Transformer:
         for location_payload in document.get("locations", []) or []:
             if not isinstance(location_payload, dict):
                 continue
-            key = normalize_name(location_payload.get("name", ""))
-            if not key:
+            raw_name = location_payload.get("name")
+            if not isinstance(raw_name, str) or not raw_name.strip():
                 continue
-            location = self.locations.setdefault(key, AggregatedLocation(name=location_payload["name"].strip()))
+            location = self._get_or_create_location(raw_name)
             location.merge(location_payload)
 
         for hazard_payload in document.get("hazards", []) or []:
@@ -450,12 +517,40 @@ class Transformer:
                 location_name = presentation_payload.get("location")
                 if not isinstance(location_name, str) or not location_name.strip():
                     continue
-                location_key = normalize_name(location_name)
-                location = self.locations.setdefault(
-                    location_key,
-                    AggregatedLocation(name=location_name.strip()),
-                )
+                location = self._get_or_create_location(location_name)
                 location.merge_presentation(hazard_key, presentation_payload)
+
+    def _get_or_create_location(self, raw_name: str) -> AggregatedLocation:
+        canonical_tokens = canonicalize_location_name(raw_name)
+        key = " ".join(canonical_tokens) if canonical_tokens else normalize_name(raw_name)
+        location = self.locations.get(key)
+        if location:
+            reference_tokens = canonical_tokens or location.canonical_tokens
+            location.consider_display_name(raw_name, canonical_tokens=reference_tokens)
+            if canonical_tokens and not location.canonical_tokens:
+                location.canonical_tokens = canonical_tokens
+            return location
+
+        if canonical_tokens:
+            for existing_key, existing_location in list(self.locations.items()):
+                existing_tokens = existing_location.canonical_tokens
+                if not existing_tokens:
+                    continue
+                if tokens_subset(existing_tokens, canonical_tokens):
+                    existing_location.consider_display_name(raw_name, canonical_tokens=existing_tokens)
+                    return existing_location
+                if tokens_subset(canonical_tokens, existing_tokens):
+                    existing_location.consider_display_name(raw_name, canonical_tokens=canonical_tokens)
+                    if key != existing_key:
+                        del self.locations[existing_key]
+                        self.locations[key] = existing_location
+                    existing_location.canonical_tokens = canonical_tokens
+                    return existing_location
+
+        display_name = raw_name.strip() or key or "Unknown location"
+        location = AggregatedLocation(name=display_name, canonical_tokens=canonical_tokens)
+        self.locations[key] = location
+        return location
 
     def _attach_existing_ids(self) -> None:
         if not self.api_client:
@@ -474,12 +569,9 @@ class Transformer:
             self.hydrator.hydrate(location)
 
     def _assign_new_ids(self) -> None:
-        next_location_id = 1
-        for key in sorted(self.locations.keys()):
-            location = self.locations[key]
+        for location in self.locations.values():
             if location.id is None:
-                location.id = f"new-location-{next_location_id}"
-                next_location_id += 1
+                location.id = str(uuid.uuid4())
         next_hazard_id = 1
         for key in sorted(self.hazards.keys()):
             hazard = self.hazards[key]
