@@ -130,7 +130,7 @@ transformer:
                 - inputting `Eagle-Holy Cross Ranger District` and `Eagle-Holy Cross District` yields `Eagle-Holy Cross District`
                 - inputting `Burned areas within Rocky Mountain National Park` and `Rocky Mountain National Park` yields `Rocky Mountain National Park`
           - Generate UUIDs:
-              If an ID does not exist for location generate a UUID as the ID.
+              If an ID does not exist for an object generate a UUID
     - hydration:
         description:
           Many documents will only reference locations by name without providing coordinates, boundaries, images, or

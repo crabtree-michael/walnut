@@ -572,12 +572,9 @@ class Transformer:
         for location in self.locations.values():
             if location.id is None:
                 location.id = str(uuid.uuid4())
-        next_hazard_id = 1
-        for key in sorted(self.hazards.keys()):
-            hazard = self.hazards[key]
+        for hazard in self.hazards.values():
             if hazard.id is None:
-                hazard.id = f"new-hazard-{next_hazard_id}"
-                next_hazard_id += 1
+                hazard.id = str(uuid.uuid4())
 
     def _build_output(self) -> dict:
         locations_payload = [

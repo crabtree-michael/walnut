@@ -160,7 +160,7 @@ class TransformerTests(unittest.TestCase):
         payload = transformer.transform_documents(documents)
 
         hazard_payload = payload["hazards"][0]
-        self.assertTrue(hazard_payload["id"].startswith("new-hazard-"))
+        uuid.UUID(hazard_payload["id"])  # raises ValueError if invalid
         location_payload = payload["locations"][0]
         uuid.UUID(location_payload["id"])  # raises ValueError if invalid
         self.assertEqual(
