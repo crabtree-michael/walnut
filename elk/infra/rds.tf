@@ -36,7 +36,7 @@ resource "aws_db_instance" "api" {
   vpc_security_group_ids  = [aws_security_group.rds.id]
   skip_final_snapshot     = true
   deletion_protection     = false
-  publicly_accessible     = false
+  publicly_accessible     = true
   backup_retention_period = 7
   storage_encrypted       = true
   apply_immediately       = true

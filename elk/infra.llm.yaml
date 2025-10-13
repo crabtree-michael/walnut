@@ -9,6 +9,7 @@ infra:
         rds:
           instances: 1
           size: small
+          publicly accessible: true
         ecs:
           instances: 1
           size: small
