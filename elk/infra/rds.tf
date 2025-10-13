@@ -1,14 +1,30 @@
+data "http" "deployer_ip" {
+  url = "https://checkip.amazonaws.com/"
+}
+
+locals {
+  deployer_ip_cidr = "${chomp(data.http.deployer_ip.response_body)}/32"
+}
+
 resource "aws_security_group" "rds" {
   name        = "${local.project_name}-rds"
   description = "Allow PostgreSQL from ECS tasks"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "PostgreSQL from ECS"
+    description     = "PostgreSQL from ECS"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs.id]
+  }
+
+  ingress {
+    description = "PostgreSQL from deployer IP"
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    security_groups = [aws_security_group.ecs.id]
+    cidr_blocks = [local.deployer_ip_cidr]
   }
 
   egress {

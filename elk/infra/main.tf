@@ -1,11 +1,11 @@
 locals {
-  project_name   = var.project_name
-  default_tags   = {
+  project_name = var.project_name
+  default_tags = {
     Project = local.project_name
     Managed = "terraform"
   }
-  api_domain     = "elk-api.macmail.app"
-  web_domain     = "elk.macmail.app"
+  api_domain = "elk-api.macmail.app"
+  web_domain = "elk.macmail.app"
 }
 
 data "aws_caller_identity" "current" {}

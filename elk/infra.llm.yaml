@@ -10,6 +10,10 @@ infra:
           instances: 1
           size: small
           publicly accessible: true
+          security group:
+            access:
+              - ecs
+              - my ip address
         ecs:
           instances: 1
           size: small
