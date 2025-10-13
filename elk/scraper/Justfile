@@ -14,3 +14,8 @@ parse:
 debug-prompt:
     mkdir -p output/json
     python3 parser.py --input-dir output/html --output-dir output/json --log-first-prompt
+
+# Transform parsed JSON into consolidated, hydrated data
+transform:
+    mkdir -p output/transformed
+    python3 transfomer.py --input-dir output/json --output-dir output/transformed

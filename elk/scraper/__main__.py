@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from . import downloader, parser as parser_module
+from . import downloader, parser as parser_module, transformer as transformer_module
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -18,6 +18,8 @@ def main(argv: list[str] | None = None) -> int:
         return downloader.main(rest)
     if command == "parse":
         return parser_module.main(rest)
+    if command == "transform":
+        return transformer_module.main(rest)
 
     print(f"Unknown command: {command}", file=sys.stderr)
     return 2

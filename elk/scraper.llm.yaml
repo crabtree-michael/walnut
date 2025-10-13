@@ -24,6 +24,10 @@ scraper:
           runs: parser.py
           input: output/html
           ouput: output/json
+      - transform:
+          runs: transfomer.py
+          input: output/json
+          output: output/transformed/<date_time_seconds>.json
       - debug-prompt:
           same as: parse
           except: uses prompt debug mode
@@ -106,6 +110,44 @@ parser:
     - thinking flag:
         When the thinking flag is enabled, output model thinking
         Stream thinking responses
+
+transformer:
+  objectives:
+    - consolidation: 
+        description:
+          Across documents, locations, hazards, and presentations may be referenced several times. 
+          Location and hazards should be given unique IDs. If the object already exists in the API, the ID from the API should be used.
+          Presentations at a location should be consolidated.
+        api:
+          endpoints: 
+            - Location name search defined in api.llm.yaml
+            - Hazard name search defined in api.llm.yaml
+    - hydration:
+        description:
+          Many documents will only reference locations by name without providing coordinates, boundaries, images, or
+          google maps id. 
+          The transformer should use Google Places API to get coordinates, images, and google maps id.
+          The transformer should use Google Geocoding API to get the boundaries
+        google:
+          key: GOOGLE_MAPS_API_KEY in local.env
+          package: googlemaps
+          places:
+            reference: https://developers.google.com/maps/documentation/places/web-service/text-search
+          geocoding:
+            reference: https://developers.google.com/maps/documentation/geocoding/requests-geocoding
+            prefer bounds over viewport:
+                If the geocoding API returns bounds, this should be used for the location boundary.
+                Otherwise, use viewport to define the location boundary.
+  input:
+    - parser json documents
+  output:
+    - json document:
+        locations:
+          kind: array of locations
+          presentations:
+            kind: array of presentations at location
+        hazards:
+          kind: array of hazards
 
 inserter:
   ## We will build this after we get the downloader and the parser are working
