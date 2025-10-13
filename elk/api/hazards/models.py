@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 from typing import List
 
 from django.core.validators import MinLengthValidator
@@ -28,6 +30,7 @@ class LocationKind(models.TextChoices):
 
 
 class Location(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
     type = models.CharField(max_length=32, choices=LocationKind.choices)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
@@ -51,6 +54,7 @@ class Location(models.Model):
 
 
 class Hazard(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
     severity = models.CharField(max_length=10, choices=HazardSeverity.choices)
     type = models.CharField(max_length=16, choices=HazardType.choices)

@@ -75,11 +75,11 @@ class HazardSearchTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()), 1)
         hazard_payload = response.json()[0]
-        self.assertEqual(hazard_payload["id"], self.hazard.id)
+        self.assertEqual(hazard_payload["id"], str(self.hazard.id))
         self.assertEqual(len(hazard_payload["tips"]), 1)
         self.assertEqual(len(hazard_payload["presentations"]), 1)
         presentation = hazard_payload["presentations"][0]
-        self.assertEqual(presentation["location"]["id"], self.location.id)
+        self.assertEqual(presentation["location"]["id"], str(self.location.id))
 
     def test_admin_can_create_hazard_and_presentation(self):
         url = reverse("hazard-list")

@@ -38,7 +38,7 @@ class LocationNameSearchAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         payload = response.json()
         self.assertGreaterEqual(len(payload), 1)
-        self.assertEqual(payload[0]["id"], self.location.id)
+        self.assertEqual(payload[0]["id"], str(self.location.id))
         self.assertIn("boundary", payload[0])
 
 
@@ -67,7 +67,7 @@ class HazardNameSearchAPITests(APITestCase):
         response = self.client.get(url, {"q": "berr"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         payload = response.json()
-        self.assertTrue(any(item["id"] == self.hazard.id for item in payload))
+        self.assertTrue(any(item["id"] == str(self.hazard.id) for item in payload))
 
     def test_limit_parameter(self):
         Hazard.objects.create(
