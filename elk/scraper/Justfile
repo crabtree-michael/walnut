@@ -18,4 +18,4 @@ debug-prompt:
 # Transform parsed JSON into consolidated, hydrated data
 transform:
     mkdir -p output/transformed
-    python3 transfomer.py --input-dir output/json --output-dir output/transformed
+    python3 transformer.py --input-dir output/json --output-dir output/transformed

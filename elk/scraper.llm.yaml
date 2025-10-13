@@ -25,7 +25,7 @@ scraper:
           input: output/html
           ouput: output/json
       - transform:
-          runs: transfomer.py
+          runs: transformer.py
           input: output/json
           output: output/transformed/<date_time_seconds>.json
       - debug-prompt:
