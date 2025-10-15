@@ -1,0 +1,88 @@
+models:
+  Expert:
+    description:
+      An expert is any expert in any field, for now we are focused on personal trainers
+      so it will only be personal trainers. The model is intentionally abstract though.
+    id: uuid
+    name: string
+    photo:
+      optional: true
+      kind: url
+    expertise:
+      kind: enum Expertise
+    specialities:
+      kind: array of Specialities
+    appointments:
+      kind: array of Appointments
+    availability:
+      description: General availability for calendar construction
+      kind: model
+      values:
+        days:
+          kind: array of enums
+          values: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+        hours:
+          kind: array of integers
+          range: 0-23
+  Expertise:
+    kind: enum
+    values:
+      ## We are only focused on personal trainers for now
+      - Personal Trainer
+  Specialities:
+    kind: enum
+    values: 
+      - Strength & Conditioning
+      - Functional Fitness
+      - High-Intensity Interval Training (HIIT)
+      - Endurance Training (marathon, triathlon prep)
+      - Speed & Agility Training
+      - Corrective Exercise / Postural Alignment
+      - Population-Specific Training
+      - Youth Fitness
+      - Senior Fitness
+      - Pre-natal & Post-natal Training
+      - Adaptive Fitness
+      - Chronic Conditions
+      - Post-Rehabilitation / Injury Recovery
+      - Athletic & Sport-Specific
+      - Sports Performance Coaching
+      - Powerlifting Coaching
+      - Olympic Weightlifting
+      - CrossFit Specialty Coaching
+      - Combat Sports Conditioning
+      - Running & Endurance Coaching
+      - Health & Wellness Integration
+      - Weight Loss / Fat Loss Programs
+      - Muscle Hypertrophy
+      - Nutrition Coaching
+      - Stress Management & Mind-Body Training
+      - Holistic Fitness
+      - Niche & Lifestyle-Oriented
+      - Online / Virtual Fitness Coaching
+      - Outdoor / Adventure Training
+      - Workplace / Corporate Wellness
+      - Group Fitness Leadership
+      - Military / Tactical Fitness
+  Client:
+    id: uuid
+    name:
+      kind: string
+    photo:
+      optional: true
+      kind: string
+    birthdate:
+      optional: true
+      kind: date
+    objective:
+      description: User provided information about fitness goals
+      kind: text
+  Appointment:
+    description: A represe
+    time:
+      kind: datetime
+    client:
+      kind: Client
+    expert:
+      kind: Expert
+    

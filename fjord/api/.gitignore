@@ -1,0 +1,18 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+
+# Django files
+*.sqlite3
+
+# Test and coverage outputs
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables
+.env

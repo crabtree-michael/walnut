@@ -1,0 +1,20 @@
+api:
+  folder: api/
+  framework:
+    django:
+      virtual_env: .venv
+      database: postgres
+  models:
+    specification: models.llm.yaml
+  environments:
+    - local:
+        provider: docker compose
+  requirements:
+    - Find Experts:
+        description:
+          Clients should be able to find experts by Specialities
+    - Admin Add Experts:
+        description:
+          In the admin tool, admin users should be able to add experts
+          A form should exist for add the expert
+          The expert form's specalities should be a list of checkable boxes for all available specalities

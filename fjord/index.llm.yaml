@@ -1,0 +1,24 @@
+fjord:
+  objective: 
+    A platform for finding and scheduling time with local personal trainers
+    particularly where a goal or specality is required.
+  systems:
+    - api
+    - webpage
+  
+api:
+  description: 
+    Stores and serves data about personal trainers
+  specification: api.llm.yaml
+
+client:
+  ## Working on developing the API
+  build: false
+  description:
+    A website for people searching for personal trainers 
+  
+backoffice:
+  ## Working on developing the API
+  build: false
+  description:
+    A backoffice tool for personal trainers to manage their availabity and view appointments
